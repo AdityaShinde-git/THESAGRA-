@@ -1,0 +1,23 @@
+
+
+python -m thesagra.cli sample.db --serve --host 127.0.0.1 --port 5439 --username admin --password change-me
+
+OR
+
+$env:THESAGRA_USERNAME="admin"
+$env:THESAGRA_PASSWORD="change-me"
+python -m thesagra.cli sample.db --serve --host 127.0.0.1 --port 5439
+
+
+
+
+
+
+
+Launch manually anytime:
+python -m thesagra.cli sample.db --serve --host 127.0.0.1 --port 5439 --username admin --password change-me
+python -m thesagra.cli --gui
+Default credentials:
+
+Username: admin
+Password: change-me

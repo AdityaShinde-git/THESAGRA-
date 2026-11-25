@@ -1,0 +1,9 @@
+{
+  "name": "@thesagra/client",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "thesagra.js",
+  "engines": {
+    "node": ">=18"
+  }
+}
