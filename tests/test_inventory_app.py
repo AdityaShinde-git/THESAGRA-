@@ -1,7 +1,10 @@
 import os
 import tempfile
+import threading
 import unittest
 
+from thesagra import THESAGRAServer
+from thesagra.drivers.python.client import THESAGRAConnection
 from inventory_app.store import (
     DuplicateSKU,
     InsufficientStock,
@@ -63,3 +66,69 @@ class InventoryStoreTests(unittest.TestCase):
         reopened = InventoryStore(self.database_path)
 
         self.assertEqual(reopened.list_products()[0]["sku"], "PEN-01")
+
+    def test_inventory_store_uses_remote_database_connection(self):
+        data_directory = os.path.join(self.directory.name, "hosted")
+        server = THESAGRAServer(
+            os.path.join(self.directory.name, "unused.db"),
+            host="127.0.0.1",
+            port=0,
+            username="root",
+            password="strong-admin-secret",
+            database_directory=data_directory,
+        )
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        host, port = server.server_address
+        store = None
+        reopened = None
+        try:
+            with THESAGRAConnection(
+                host=host,
+                port=port,
+                username="root",
+                password="strong-admin-secret",
+            ) as admin:
+                admin.create_database("stockroom")
+                admin.create_role("stockroom_rw")
+                admin.create_user("stockroom_app", "stockroom-app-secret")
+                admin.grant_role("stockroom_rw", "stockroom_app")
+                for privilege in ("CONNECT", "READ", "WRITE"):
+                    admin.grant_database(
+                        "stockroom_rw",
+                        "stockroom",
+                        privilege,
+                    )
+
+            uri = (
+                f"thesagra://stockroom_app:stockroom-app-secret@"
+                f"{host}:{port}/stockroom"
+            )
+            store = InventoryStore(connection_url=uri)
+            product = store.create_product(
+                "REMOTE-01",
+                "Remote inventory item",
+                14.5,
+                5,
+            )
+            order = store.create_order(
+                "Ada Lovelace",
+                [{"product_id": product["id"], "quantity": 2}],
+            )
+            self.assertEqual(order["total"], 29.0)
+            store.close()
+
+            reopened = InventoryStore(connection_url=uri)
+            self.assertEqual(
+                reopened.list_products()[0]["stock_quantity"],
+                3,
+            )
+            self.assertEqual(reopened.summary()["order_count"], 1)
+        finally:
+            if store is not None:
+                store.close()
+            if reopened is not None:
+                reopened.close()
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)

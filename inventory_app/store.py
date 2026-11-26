@@ -1,7 +1,10 @@
 import os
 import threading
 
-from thesagra.query.engine import QueryError, RelationalEngine
+from thesagra import THESAGRAConnection
+from thesagra.drivers.python.errors import QueryError as RemoteQueryError
+from thesagra.query.engine import QueryError as LocalQueryError
+from thesagra.query.engine import RelationalEngine
 from thesagra.query.parser import parse
 from thesagra.server.protocol import bind_parameters
 from thesagra.storage.database import DatabaseFile
@@ -24,21 +27,62 @@ class InsufficientStock(InventoryError):
 
 
 class InventoryStore:
-    def __init__(self, database_path):
-        self.database_path = os.fspath(database_path)
-        os.makedirs(os.path.dirname(os.path.abspath(self.database_path)), exist_ok=True)
-        if os.path.isfile(self.database_path):
-            database = DatabaseFile.open(self.database_path)
+    def __init__(
+        self,
+        database_path=None,
+        connection_url=None,
+        tls=False,
+        tls_ca=None,
+    ):
+        if database_path is not None and connection_url is not None:
+            raise ValueError(
+                "Choose either a local database path or a connection URL"
+            )
+        self.connection = None
+        self.engine = None
+        self.database_path = None
+        self._remote_transaction_active = False
+        if connection_url is not None:
+            self.connection = THESAGRAConnection(
+                uri=connection_url,
+                tls=tls,
+                tls_ca=tls_ca,
+            ).connect()
         else:
-            database = DatabaseFile.create(self.database_path)
-        self.engine = RelationalEngine(database)
+            self.database_path = os.fspath(database_path or "stockroom.db")
+            os.makedirs(
+                os.path.dirname(os.path.abspath(self.database_path)),
+                exist_ok=True,
+            )
+            if os.path.isfile(self.database_path):
+                database = DatabaseFile.open(self.database_path)
+            else:
+                database = DatabaseFile.create(self.database_path)
+            self.engine = RelationalEngine(database)
         self.lock = threading.RLock()
-        self._initialize_schema()
+        try:
+            self._initialize_schema()
+        except Exception:
+            self.close()
+            raise
 
     def _execute(self, sql, parameters=None):
+        if self.connection is not None:
+            result = self.connection.execute(sql, parameters)
+            keyword = sql.strip().split(None, 1)[0].rstrip(";").upper()
+            if keyword in ("BEGIN", "START"):
+                self._remote_transaction_active = True
+            elif keyword in ("COMMIT", "ROLLBACK"):
+                self._remote_transaction_active = False
+            return result
         if parameters:
             sql = bind_parameters(sql, parameters)
         return self.engine.execute(parse(sql))
+
+    def _in_transaction(self):
+        if self.engine is not None:
+            return self.engine.active_transaction is not None
+        return self._remote_transaction_active
 
     def _initialize_schema(self):
         schemas = (
@@ -74,8 +118,19 @@ class InventoryStore:
         )
         with self.lock:
             for table, statement in schemas:
-                if table not in self.engine.catalog.tables:
+                if (
+                    self.engine is not None
+                    and table in self.engine.catalog.tables
+                ):
+                    continue
+                try:
                     self._execute(statement)
+                except RemoteQueryError as exc:
+                    message = str(exc)
+                    if message.startswith("QUERY_ERROR: "):
+                        message = message[len("QUERY_ERROR: "):]
+                    if message != f"Table '{table}' already exists":
+                        raise
 
     def list_products(self):
         with self.lock:
@@ -106,7 +161,7 @@ class InventoryStore:
                     "SELECT id FROM products WHERE sku=?;",
                     [sku],
                 )
-        except QueryError as exc:
+        except (LocalQueryError, RemoteQueryError) as exc:
             if "Duplicate primary key or unique value" in str(exc):
                 raise DuplicateSKU("A product with this SKU already exists") from exc
             raise
@@ -205,7 +260,7 @@ class InventoryStore:
                     )
                 self._execute("COMMIT;")
             except Exception:
-                if self.engine.active_transaction is not None:
+                if self._in_transaction():
                     self._execute("ROLLBACK;")
                 raise
 
@@ -225,3 +280,8 @@ class InventoryStore:
             "order_count": orders[0] or 0,
             "sales_total": orders[1] or 0,
         }
+
+    def close(self):
+        if self.connection is not None:
+            self.connection.close()
+            self.connection = None

@@ -41,14 +41,37 @@ def create_app(database_path=None):
         version="0.1.0",
     )
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-    resolved_database_path = database_path or os.environ.get(
-        "THESAGRA_DB_PATH",
-        "stockroom.db",
-    )
 
     @app.on_event("startup")
     def initialize_store():
-        app.state.store = InventoryStore(resolved_database_path)
+        connection_url = (
+            os.environ.get("THESAGRA_URL")
+            if database_path is None
+            else None
+        )
+        if connection_url:
+            tls_value = os.environ.get("THESAGRA_TLS", "false").strip().lower()
+            if tls_value not in ("true", "false", "1", "0", "yes", "no"):
+                raise ValueError(
+                    "THESAGRA_TLS must be true, false, 1, 0, yes, or no"
+                )
+            app.state.store = InventoryStore(
+                connection_url=connection_url,
+                tls=tls_value in ("true", "1", "yes"),
+                tls_ca=os.environ.get("THESAGRA_TLS_CA") or None,
+            )
+        else:
+            resolved_database_path = database_path or os.environ.get(
+                "THESAGRA_DB_PATH",
+                "stockroom.db",
+            )
+            app.state.store = InventoryStore(resolved_database_path)
+
+    @app.on_event("shutdown")
+    def close_store():
+        store = getattr(app.state, "store", None)
+        if store is not None:
+            store.close()
 
     @app.get("/", include_in_schema=False)
     def home():
