@@ -1,0 +1,68 @@
+:root {
+  color-scheme: light;
+  --ink: #17231f;
+  --muted: #78827d;
+  --line: #e6ebe7;
+  --paper: #f7f9f6;
+  --white: #fff;
+  --green: #2e7658;
+  --green-dark: #20583f;
+  --mint: #e5f2e9;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: "Segoe UI", Arial, sans-serif; }
+.topbar { height: 66px; padding: 0 max(5vw, calc((100vw - 1240px) / 2)); display: flex; align-items: center; justify-content: space-between; background: var(--white); border-bottom: 1px solid var(--line); }
+.brand { color: var(--ink); text-decoration: none; font: 800 22px "Segoe UI", Arial, sans-serif; letter-spacing: -1.2px; }
+.brand span { color: var(--green); }
+.topbar-note, .eyebrow { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; }
+.layout { max-width: 1240px; margin: 0 auto; padding: 56px 28px 30px; }
+.intro { display: flex; justify-content: space-between; align-items: end; gap: 30px; margin-bottom: 32px; }
+.eyebrow { margin: 0 0 10px; }
+h1, h2 { font-family: "Segoe UI", Arial, sans-serif; letter-spacing: -1px; }
+h1 { margin: 0; font-size: clamp(32px, 4vw, 48px); line-height: 1.14; }
+h1 span { color: var(--green); }
+.intro-copy { max-width: 290px; color: var(--muted); line-height: 1.65; margin: 0 0 4px; }
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.metric, .panel { background: var(--white); border: 1px solid var(--line); border-radius: 10px; }
+.metric { padding: 18px 20px; }
+.metric span { display: block; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.metric strong { display: block; margin-top: 12px; font: 700 25px "Segoe UI", Arial, sans-serif; }
+.columns { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; }
+.panel { min-width: 0; padding: 22px; }
+.panel-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.panel-heading .eyebrow { margin-bottom: 4px; }
+h2 { font-size: 21px; margin: 0; }
+.badge { color: var(--green-dark); background: var(--mint); border-radius: 20px; padding: 6px 10px; font-size: 11px; font-weight: 700; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+label { display: block; font-size: 11px; font-weight: 700; color: #56625b; }
+input, select { width: 100%; margin-top: 6px; border: 1px solid var(--line); border-radius: 6px; background: #fcfdfc; padding: 10px 11px; color: var(--ink); font: 13px "Segoe UI", Arial, sans-serif; outline: none; }
+input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px #2e765814; }
+.full { grid-column: 1 / -1; }
+button { min-height: 39px; grid-column: 1 / -1; border: 0; border-radius: 6px; color: #fff; background: var(--green); font: 600 12px "Segoe UI", Arial, sans-serif; cursor: pointer; transition: background .15s ease; }
+button:hover { background: var(--green-dark); }
+button:disabled { cursor: wait; opacity: .65; }
+button span { margin-left: 5px; font-size: 16px; vertical-align: -1px; }
+.form-message { min-height: 18px; margin: 8px 0; color: var(--green-dark); font-size: 12px; }
+.form-message.error { color: #b44237; }
+.table-wrap { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+th { padding: 11px 8px; color: var(--muted); font-size: 9px; letter-spacing: .9px; }
+td { padding: 12px 8px; border-top: 1px solid #eef1ee; font-size: 12px; }
+td:first-child { font-weight: 600; }
+.empty { color: var(--muted); text-align: center; padding: 24px 8px; }
+footer { padding: 28px 0 0; text-align: center; color: var(--muted); font-size: 11px; }
+footer span { color: var(--green); padding: 0 4px; }
+@media (max-width: 850px) { .columns { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .topbar { padding: 0 20px; }
+  .topbar-note { font-size: 8px; }
+  .layout { padding: 38px 16px 24px; }
+  .intro { align-items: start; flex-direction: column; gap: 12px; }
+  .intro-copy { max-width: 400px; }
+  .metrics { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .metric { padding: 14px; }
+  .metric strong { font-size: 21px; }
+  .panel { padding: 16px 12px; }
+  .form-grid { gap: 10px; }
+}

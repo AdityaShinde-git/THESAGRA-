@@ -8,9 +8,18 @@ version = "0.1.0"
 description = "THESAGRA unified database system prototype"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.110",
     "Pillow>=10.2",
+    "pydantic>=2.9",
     "pypdfium2>=4.30,<5",
+    "uvicorn>=0.27",
 ]
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["inventory_app*", "thesagra*"]
+
+[tool.setuptools.package-data]
+inventory_app = ["static/*.css", "static/*.html", "static/*.js"]

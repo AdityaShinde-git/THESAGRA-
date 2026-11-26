@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stockroom | Inventory & Orders</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">stockroom<span>.</span></a>
+    <span class="topbar-note">INVENTORY OPERATIONS</span>
+  </header>
+  <main class="layout">
+    <section class="intro">
+      <div>
+        <p class="eyebrow">THESAGRA-POWERED OPERATIONS</p>
+        <h1>Know what’s in stock.<br><span>Stay on top of every order.</span></h1>
+      </div>
+      <p class="intro-copy">A clean workspace for your products, stock levels, and customer orders.</p>
+    </section>
+
+    <section class="metrics" aria-label="Store summary">
+      <article class="metric"><span>PRODUCTS</span><strong id="product-count">—</strong></article>
+      <article class="metric"><span>UNITS IN STOCK</span><strong id="units-in-stock">—</strong></article>
+      <article class="metric"><span>ORDERS PLACED</span><strong id="order-count">—</strong></article>
+      <article class="metric"><span>SALES TOTAL</span><strong id="sales-total">—</strong></article>
+    </section>
+
+    <section class="columns">
+      <div class="panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">CATALOG</p><h2>Products</h2></div>
+          <span class="badge" id="catalog-count">0 items</span>
+        </div>
+        <form id="product-form" class="form-grid">
+          <label>Product name<input name="name" required maxlength="120" placeholder="Ceramic pour-over"></label>
+          <label>SKU<input name="sku" required maxlength="40" placeholder="BREW-001"></label>
+          <label>Unit price<input name="unit_price" required type="number" min="0.01" step="0.01" placeholder="24.00"></label>
+          <label>Opening stock<input name="stock_quantity" required type="number" min="0" step="1" placeholder="30"></label>
+          <button type="submit">Add product <span aria-hidden="true">+</span></button>
+        </form>
+        <p class="form-message" id="product-message" role="status"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>PRODUCT</th><th>SKU</th><th>PRICE</th><th>IN STOCK</th></tr></thead>
+            <tbody id="products-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">FULFILLMENT</p><h2>New order</h2></div>
+        </div>
+        <form id="order-form" class="form-grid">
+          <label class="full">Customer name<input name="customer_name" required maxlength="120" placeholder="Alex Morgan"></label>
+          <label class="full">Product<select id="order-product" name="product_id" required></select></label>
+          <label class="full">Quantity<input name="quantity" required type="number" min="1" step="1" value="1"></label>
+          <button type="submit">Place order <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="form-message" id="order-message" role="status"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ORDER</th><th>CUSTOMER</th><th>TOTAL</th><th>STATUS</th></tr></thead>
+            <tbody id="orders-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <footer>Stockroom <span>·</span> A local full-stack portfolio project using the THESAGRA database</footer>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
