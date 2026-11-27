@@ -30,6 +30,9 @@ from .protocol import (
 )
 
 
+UNAUTHENTICATED_SOCKET_TIMEOUT = 30
+
+
 class THESAGRAServer(socketserver.ThreadingTCPServer):
     allow_reuse_address = True
     daemon_threads = True
@@ -183,7 +186,7 @@ class _THESAGRAHandler(socketserver.StreamRequestHandler):
             self.engine_lock.release()
 
     def handle(self):
-        self.request.settimeout(30)
+        self.request.settimeout(UNAUTHENTICATED_SOCKET_TIMEOUT)
         authenticated = False
         session_id = None
         self.session_id = None
@@ -363,6 +366,7 @@ class _THESAGRAHandler(socketserver.StreamRequestHandler):
                     "auth_success",
                     peer=self.client_address,
                 )
+                self.request.settimeout(None)
                 send_message(
                     self.request,
                     2,

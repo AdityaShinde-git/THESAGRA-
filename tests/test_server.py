@@ -3,8 +3,10 @@ import socket
 import struct
 import tempfile
 import threading
+import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import patch
 
 from thesagra import THESAGRAClient, THESAGRAServer
 from thesagra.drivers.python.client import THESAGRAConnection
@@ -76,6 +78,21 @@ class ServerTests(unittest.TestCase):
         )
         self.assertEqual(result["rows"], [["Ada"]])
         client.close()
+
+    def test_authenticated_idle_connection_remains_open(self):
+        with patch(
+            "thesagra.server.server.UNAUTHENTICATED_SOCKET_TIMEOUT",
+            0.05,
+        ):
+            client = self.client()
+            try:
+                time.sleep(0.1)
+                result = client.query(
+                    "CREATE TABLE idle_session (id INTEGER PRIMARY KEY);"
+                )
+                self.assertTrue(result["ok"])
+            finally:
+                client.close()
 
     def test_auth_failure_and_disconnect(self):
         client = THESAGRAClient(self.host, self.port)
